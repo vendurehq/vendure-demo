@@ -13,6 +13,7 @@ import { defaultEmailHandlers, EmailPlugin, FileBasedTemplateLoader, } from "@ve
 import { GraphiqlPlugin } from "@vendure/graphiql-plugin";
 import path from "path";
 import { DemoCmsPlugin } from './plugins/demo-cms/demo-cms.plugin';
+import { DemoLoginPlugin } from './plugins/demo-login/demo-login.plugin';
 import { DemoModePlugin } from "./plugins/demo-mode/demo-mode-plugin";
 import { DemoUserPlugin } from './plugins/demo-user/demo-user.plugin';
 import { LandingPagePlugin } from "./plugins/landing-page/landing-page-plugin";
@@ -72,6 +73,7 @@ export const config: VendureConfig = {
 
         // Conditional plugins (PUBLIC mode only)
         ...(isPublicMode() ? [
+            DemoLoginPlugin.init(),
             DemoCmsPlugin.init({}),
             AdminUiPlugin.init({
                 route: "legacy-admin",
