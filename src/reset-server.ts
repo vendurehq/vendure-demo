@@ -1,10 +1,14 @@
 import {INestApplication} from '@nestjs/common';
 import {
     bootstrap,
+    ChannelService,
     CustomerService,
+    CurrencyCode,
     isGraphQlErrorResult,
     JobQueueService,
+    LanguageCode,
     OrderService,
+    ProductVariantService,
     RequestContextService,
     Permission
 } from '@vendure/core';
@@ -102,6 +106,8 @@ function populateServer() {
         getVendureCreateAsset('assets/products.csv'),
     ).then((app) => createTestCustomer(app).then(() => app))
         .then((app) => createDemoAdministrators(app).then(() => app))
+        .then((app) => configureDefaultChannel(app).then(() => app))
+        .then((app) => seedEuroPrices(app).then(() => app))
         .then(app => app.close());
 }
 
@@ -218,6 +224,58 @@ async function createDemoAdministrators(app: INestApplication) {
         );
         console.log('Demo administrator created');
     }
+}
+
+/**
+ * Adds EUR currency and German language to the default channel
+ */
+async function configureDefaultChannel(app: INestApplication) {
+    if (isPublicMode()) {
+        return;
+    }
+
+    const channelService = app.get(ChannelService);
+    const requestContextService = app.get(RequestContextService);
+    const ctx = await requestContextService.create({apiType: 'admin'});
+
+    console.log('Configuring default channel with EUR and German');
+    const defaultChannel = await channelService.getDefaultChannel(ctx);
+    await channelService.update(ctx, {
+        id: defaultChannel.id,
+        availableCurrencyCodes: [CurrencyCode.USD, CurrencyCode.EUR],
+        availableLanguageCodes: [LanguageCode.en, LanguageCode.de],
+    });
+}
+
+/**
+ * Seeds EUR prices for all product variants based on their existing USD price
+ */
+async function seedEuroPrices(app: INestApplication) {
+    if (isPublicMode()) {
+        return;
+    }
+
+    const productVariantService = app.get(ProductVariantService);
+    const channelService = app.get(ChannelService);
+    const requestContextService = app.get(RequestContextService);
+    const ctx = await requestContextService.create({apiType: 'admin'});
+
+    const defaultChannel = await channelService.getDefaultChannel(ctx);
+
+    console.log('Seeding EUR prices for all product variants');
+    const {items, totalItems} = await productVariantService.findAll(ctx, {take: 500});
+    for (const variant of items) {
+        const prices = await productVariantService.getProductVariantPrices(ctx, variant.id);
+        const usdPrice = prices.find(p => p.currencyCode === CurrencyCode.USD);
+        if (usdPrice) {
+            // Convert USD to EUR with a ~0.93 rate (93 cents per dollar)
+            const eurPrice = Math.round(usdPrice.price * 0.93);
+            await productVariantService.createOrUpdateProductVariantPrice(
+                ctx, variant.id, eurPrice, defaultChannel.id, CurrencyCode.EUR,
+            );
+        }
+    }
+    console.log(`Seeded EUR prices for ${items.length} variants`);
 }
 
 // Used to make the order history items follow in the correct sequence.
