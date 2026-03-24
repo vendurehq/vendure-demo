@@ -2,6 +2,7 @@ FROM node:22-alpine
 
 ARG API_PUBLIC_URL
 ARG API_PUBLIC_PORT
+ARG TENANT_MODE
 
 RUN apk add --no-cache libc6-compat python3 make g++
 
@@ -18,6 +19,8 @@ USER node
 RUN npm ci
 
 COPY --chown=node:node . .
+
+ENV TENANT_MODE=$TENANT_MODE
 
 RUN npm run compile
 RUN npm run build:dashboard
