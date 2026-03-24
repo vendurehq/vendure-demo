@@ -4,6 +4,7 @@ import {
     ChannelService,
     CustomerService,
     CurrencyCode,
+    GlobalSettingsService,
     isGraphQlErrorResult,
     JobQueueService,
     LanguageCode,
@@ -237,6 +238,12 @@ async function configureDefaultChannel(app: INestApplication) {
     const channelService = app.get(ChannelService);
     const requestContextService = app.get(RequestContextService);
     const ctx = await requestContextService.create({apiType: 'admin'});
+
+    console.log('Enabling German language in global settings');
+    const globalSettingsService = app.get(GlobalSettingsService);
+    await globalSettingsService.updateSettings(ctx, {
+        availableLanguages: [LanguageCode.en, LanguageCode.de],
+    });
 
     console.log('Configuring default channel with EUR and German');
     const defaultChannel = await channelService.getDefaultChannel(ctx);
