@@ -32,7 +32,7 @@ export const config: VendureConfig = {
             secret: process.env.COOKIE_SECRET ?? 'SuperSecret',
         },
         requireVerification: true,
-        tokenMethod: ["cookie", "bearer"],
+        tokenMethod: ["cookie", "bearer", "api-key"],
         superadminCredentials: {
             identifier: process.env.SUPERADMIN_USERNAME ?? "superadmin",
             password: process.env.SUPERADMIN_PASSWORD ?? "superadmin",
@@ -50,7 +50,7 @@ export const config: VendureConfig = {
     orderOptions: {
         guestCheckoutStrategy: new DefaultGuestCheckoutStrategy({
             allowGuestCheckouts: true,
-            allowGuestCheckoutForRegisteredCustomers: false, 
+            allowGuestCheckoutForRegisteredCustomers: false,
         })
     },
     customFields: {},
