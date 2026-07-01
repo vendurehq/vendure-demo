@@ -11,7 +11,8 @@ import {
     OrderService,
     ProductVariantService,
     RequestContextService,
-    Permission
+    Permission,
+    TransactionalConnection
 } from '@vendure/core';
 import {populate} from '@vendure/core/cli';
 import {config} from './vendure-config';
@@ -155,6 +156,7 @@ async function createTestCustomer(app: INestApplication) {
     const customerService = app.get(CustomerService);
     const requestContextService = app.get(RequestContextService);
     const orderService = app.get(OrderService);
+    const connection = app.get(TransactionalConnection);
     const ctx = await requestContextService.create({apiType: 'admin'});
 
 
@@ -189,10 +191,12 @@ async function createTestCustomer(app: INestApplication) {
     await orderService.setShippingMethod(ctx, order.id, [1]);
     await orderService.transitionToState(ctx, order.id, 'ArrangingPayment');
     await pause(1000);
-    const completedOrder = await orderService.addPaymentToOrder(ctx, order.id, {
-        method: 'standard-payment',
-        metadata: {},
-    });
+    const completedOrder = await connection.withTransaction(ctx, txCtx =>
+        orderService.addPaymentToOrder(txCtx, order.id, {
+            method: 'standard-payment',
+            metadata: {},
+        })
+    );
     await pause(1000);
     if (!isGraphQlErrorResult(completedOrder)) {
         await orderService.settlePayment(ctx, completedOrder.payments?.[0].id);
