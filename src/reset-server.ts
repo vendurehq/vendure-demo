@@ -41,10 +41,19 @@ process.on('SIGINT', async () => {
 
 export async function resetServer() {
     console.log(`[${(new Date()).toISOString()}] Starting Vendure in ${getTenantMode().toUpperCase()} mode`);
-    console.log(`[${(new Date()).toISOString()}] Resetting Vendure server to a pristine condition...`);
     if (app) {
         await app.close();
     }
+    return prepareServer()
+        .then(async () => {
+            app = await startServer();
+            await app.get(JobQueueService).start();
+        })
+}
+
+export async function prepareServer() {
+    console.log(`[${(new Date()).toISOString()}] Preparing Vendure in ${getTenantMode().toUpperCase()} mode`);
+    console.log(`[${(new Date()).toISOString()}] Resetting Vendure server to a pristine condition...`);
     return clean()
         .then(() => {
             if (cacheExists()) {
@@ -53,18 +62,15 @@ export async function resetServer() {
                 return populateServer().then(() => cachePopulatedContent());
             }
         })
-        .then(async () => {
-            app = await bootstrap(config)
-                .then(async _app => {
-                    await _app.get(JobQueueService).start();
-                    return _app;
-                })
-                .catch(err => {
-                    // tslint:disable-next-line:no-console
-                    console.log(err);
-                    throw err;
-                });
-        })
+}
+
+export async function startServer() {
+    return bootstrap(config)
+        .catch(err => {
+            // tslint:disable-next-line:no-console
+            console.log(err);
+            throw err;
+        });
 }
 
 /**

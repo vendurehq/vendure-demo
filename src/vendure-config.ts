@@ -18,6 +18,7 @@ import { DemoModePlugin } from "./plugins/demo-mode/demo-mode-plugin";
 import { DemoUserPlugin } from './plugins/demo-user/demo-user.plugin';
 import { LandingPagePlugin } from "./plugins/landing-page/landing-page-plugin";
 import { isPublicMode, isReadonlyMode } from './tenant-config';
+import "dotenv/config";
 
 const VENDURE_BASE_URL = process.env.VENDURE_BASE_URL || "https://demo.vendure.io";
 const FRONTEND_BASE_URL = process.env.FRONTEND_BASE_URL || "https://demo.vendure.io/storefront";

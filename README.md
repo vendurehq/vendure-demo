@@ -21,11 +21,31 @@
 </p>
 
 
-This is a demo project used as the basis for the online Vendure demo. The src/index.ts script populates the server using the Vendure CLI `populate` command, and then caches the generated pristine data. Every day, this cached data is restored to reset any changes which have been made to the server instance in that time.
+This is a demo project used as the basis for the online Vendure demo. The `npm run prepare:demo` script populates the server using Vendure's populate helper, and then caches the generated pristine data. Every day, this cached data is restored to reset any changes which have been made to the server instance in that time.
 
 ## Running Locally
 
-To run locally, install dependencies with `npm` and then run the instance with `npm run comile` and `npm start`.
+To run locally, install dependencies with `npm` and then start the server, worker, and Dashboard with:
+
+```bash
+npm run dev
+```
+
+The demo tenant modes are still available:
+
+```bash
+npm run dev:readonly
+npm run dev:public
+```
+
+To build and run the compiled project:
+
+```bash
+npm run build
+npm run start
+```
+
+The project also exposes the Vendure 3.7 lifecycle commands through `dev:server`, `dev:worker`, `dev:dashboard`, `build:server`, `build:worker`, `build:dashboard`, `start:server`, and `start:worker`.
 
 ## Running in Docker
 
