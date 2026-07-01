@@ -11,7 +11,8 @@ import {
     OrderService,
     ProductVariantService,
     RequestContextService,
-    Permission
+    Permission,
+    TransactionalConnection
 } from '@vendure/core';
 import {populate} from '@vendure/core/cli';
 import {config} from './vendure-config';
@@ -41,10 +42,19 @@ process.on('SIGINT', async () => {
 
 export async function resetServer() {
     console.log(`[${(new Date()).toISOString()}] Starting Vendure in ${getTenantMode().toUpperCase()} mode`);
-    console.log(`[${(new Date()).toISOString()}] Resetting Vendure server to a pristine condition...`);
     if (app) {
         await app.close();
     }
+    return prepareServer()
+        .then(async () => {
+            app = await startServer();
+            await app.get(JobQueueService).start();
+        })
+}
+
+export async function prepareServer() {
+    console.log(`[${(new Date()).toISOString()}] Preparing Vendure in ${getTenantMode().toUpperCase()} mode`);
+    console.log(`[${(new Date()).toISOString()}] Resetting Vendure server to a pristine condition...`);
     return clean()
         .then(() => {
             if (cacheExists()) {
@@ -53,18 +63,15 @@ export async function resetServer() {
                 return populateServer().then(() => cachePopulatedContent());
             }
         })
-        .then(async () => {
-            app = await bootstrap(config)
-                .then(async _app => {
-                    await _app.get(JobQueueService).start();
-                    return _app;
-                })
-                .catch(err => {
-                    // tslint:disable-next-line:no-console
-                    console.log(err);
-                    throw err;
-                });
-        })
+}
+
+export async function startServer() {
+    return bootstrap(config)
+        .catch(err => {
+            // tslint:disable-next-line:no-console
+            console.log(err);
+            throw err;
+        });
 }
 
 /**
@@ -149,6 +156,7 @@ async function createTestCustomer(app: INestApplication) {
     const customerService = app.get(CustomerService);
     const requestContextService = app.get(RequestContextService);
     const orderService = app.get(OrderService);
+    const connection = app.get(TransactionalConnection);
     const ctx = await requestContextService.create({apiType: 'admin'});
 
 
@@ -183,10 +191,12 @@ async function createTestCustomer(app: INestApplication) {
     await orderService.setShippingMethod(ctx, order.id, [1]);
     await orderService.transitionToState(ctx, order.id, 'ArrangingPayment');
     await pause(1000);
-    const completedOrder = await orderService.addPaymentToOrder(ctx, order.id, {
-        method: 'standard-payment',
-        metadata: {},
-    });
+    const completedOrder = await connection.withTransaction(ctx, txCtx =>
+        orderService.addPaymentToOrder(txCtx, order.id, {
+            method: 'standard-payment',
+            metadata: {},
+        })
+    );
     await pause(1000);
     if (!isGraphQlErrorResult(completedOrder)) {
         await orderService.settlePayment(ctx, completedOrder.payments?.[0].id);

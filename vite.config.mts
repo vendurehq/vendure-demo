@@ -1,10 +1,10 @@
-import { vendureDashboardPlugin } from "@vendure/dashboard/vite";
-import { pathToFileURL } from "url";
-import { defineConfig } from "vite";
 import { resolve, join } from "path";
+import { pathToFileURL } from "url";
+import { vendureDashboardPlugin } from "@vendure/dashboard/vite";
+import { defineConfig } from "vite";
 
 export default defineConfig({
-  base: "admin",
+  base: "/admin",
   build: {
     outDir: join(__dirname, "dist/dashboard"),
   },
@@ -16,12 +16,17 @@ export default defineConfig({
       // and custom fields that are configured.
       vendureConfigPath: pathToFileURL("./src/vendure-config.ts"),
       // Points to the location of your Vendure server.
-      api: {
-        host: process.env.API_PUBLIC_URL || "http://localhost",
-        port: process.env.API_PUBLIC_PORT
-          ? +process.env.API_PUBLIC_PORT
-          : 3000,
-      },
+      // In production, 'auto' lets the dashboard derive the API URL from the
+      // server that serves it. In development, we use explicit defaults so that
+      // the Vite dev server can reach the Vendure backend.
+      api: process.env.NODE_ENV === "production"
+        ? { host: "auto", port: "auto" }
+        : {
+            host: process.env.API_PUBLIC_URL || "http://localhost",
+            port: process.env.API_PUBLIC_PORT
+              ? +process.env.API_PUBLIC_PORT
+              : 3000,
+          },
       // When you start the Vite server, your Admin API schema will
       // be introspected and the types will be generated in this location.
       // These types can be used in your dashboard extensions to provide

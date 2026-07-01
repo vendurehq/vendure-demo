@@ -22,8 +22,7 @@ COPY --chown=node:node . .
 
 ENV TENANT_MODE=$TENANT_MODE
 
-RUN npm run compile
-RUN npm run build:dashboard
+RUN npm run build
 
 ENV VIPS_CONCURRENCY=$(nproc)
 
@@ -32,4 +31,4 @@ ENV PORT=3000
 
 HEALTHCHECK --interval=12s --timeout=12s --start-period=5s CMD wget --no-verbose --tries=1 --spider http://localhost:$PORT/health || exit 1
 
-CMD ["node", "build/index.js"]
+CMD ["npm", "run", "start"]
