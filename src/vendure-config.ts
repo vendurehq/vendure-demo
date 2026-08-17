@@ -65,6 +65,7 @@ export const config: VendureConfig = {
         }),
         DefaultSearchPlugin.init({
             indexStockStatus: true,
+            indexCurrencyCode: true,
         }),
         DefaultSchedulerPlugin.init({}),
         HardenPlugin.init({
