@@ -62,7 +62,9 @@ export const config: VendureConfig = {
             assetUploadDir: path.join(__dirname, "../static/assets"),
             assetUrlPrefix: `${VENDURE_BASE_URL}/assets/`,
         }),
-        DefaultSearchPlugin,
+        DefaultSearchPlugin.init({
+            indexCurrencyCode: true,
+        }),
         DefaultSchedulerPlugin.init({}),
         LandingPagePlugin,
         GraphiqlPlugin.init(),
