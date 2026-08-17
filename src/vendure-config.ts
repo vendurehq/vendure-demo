@@ -11,6 +11,7 @@ import {
 import { DashboardPlugin } from "@vendure/dashboard/plugin";
 import { defaultEmailHandlers, EmailPlugin, FileBasedTemplateLoader, } from "@vendure/email-plugin";
 import { GraphiqlPlugin } from "@vendure/graphiql-plugin";
+import { HardenPlugin } from "@vendure/harden-plugin";
 import path from "path";
 import { DemoCmsPlugin } from './plugins/demo-cms/demo-cms.plugin';
 import { DemoLoginPlugin } from './plugins/demo-login/demo-login.plugin';
@@ -63,9 +64,16 @@ export const config: VendureConfig = {
             assetUrlPrefix: `${VENDURE_BASE_URL}/assets/`,
         }),
         DefaultSearchPlugin.init({
+            indexStockStatus: true,
             indexCurrencyCode: true,
         }),
         DefaultSchedulerPlugin.init({}),
+        HardenPlugin.init({
+            maxQueryComplexity: 1000,
+            // "dev" keeps introspection & GraphiQL available, since the demo
+            // API is meant to be explored. Query complexity limits still apply.
+            apiMode: "dev",
+        }),
         LandingPagePlugin,
         GraphiqlPlugin.init(),
         DashboardPlugin.init({
