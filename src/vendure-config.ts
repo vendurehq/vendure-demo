@@ -69,7 +69,7 @@ export const config: VendureConfig = {
         }),
         DefaultSchedulerPlugin.init({}),
         HardenPlugin.init({
-            maxQueryComplexity: 1000,
+            maxQueryComplexity: 4500,
             // "dev" keeps introspection & GraphiQL available, since the demo
             // API is meant to be explored. Query complexity limits still apply.
             apiMode: "dev",
